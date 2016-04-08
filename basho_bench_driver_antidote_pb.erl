@@ -48,6 +48,7 @@
 
 new([Id, StateD]) ->
     %% Make sure bitcask is available
+    io:format("Hello From driver new debut \n"),
     case code:which(antidote) of
         non_existing ->
             ?FAIL_MSG("~s requires antidote to be available on code path.\n",
@@ -56,14 +57,14 @@ new([Id, StateD]) ->
             ok
     end,
 
-    IPs = StateD#state.antidote_pb_ips,
-    PbPort = StateD#state.antidote_pb_port,
-    Types  = StateD#state.antidote_types,
+    IPs = StateD#state.ips,
+    PbPort = StateD#state.pb_port,
+    Types  = StateD#state.types,
     SetSize = StateD#state.set_size,
     NumUpdates  = StateD#state.num_updates,
     NumReads = StateD#state.num_reads,
     NumPartitions = StateD#state.ips,
-    MeasureStaleness = StateD#state.staleness,
+    MeasureStaleness = StateD#state.measure_staleness,
 
     %% Choose the node using our ID as a modulus
     TargetNode = lists:nth((Id rem length(IPs)+1), IPs),
@@ -78,7 +79,8 @@ new([Id, StateD]) ->
 		type_dict = TypeDict, pb_port=PbPort,
 		target_node=TargetNode, commit_time=ignore,
         num_reads=NumReads, num_updates=NumUpdates,
-        measure_staleness=MeasureStaleness}}.
+        measure_staleness=MeasureStaleness}},
+        io:format("Hello From driver new fin \n").
 
 %% @doc Read a key
 run(read, KeyGen, _ValueGen, State=#state{pb_pid = Pid, worker_id = Id,

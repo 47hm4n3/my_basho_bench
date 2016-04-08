@@ -13,6 +13,7 @@
 %% Helper macro for declaring children of supervisor
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
+
 %% worker
 -record(stateW, { id,
                  keygen,
@@ -53,7 +54,10 @@ start_link() ->
     
 
 start() ->
-	ok = mygenserv:launchWorkersSup(),
+io:format("Hello From myleader avant recup \n"),
+  {SW, SD} = recup(),
+io:format("Hello From myleader apres recup \n"),
+	ok = mygenserv:launchWorkersSup({SW, SD}),
 	io:fwrite("hello from leader:start 1\n"),
 	ok = application:set_env(basho_bench_app, is_running, true),
 	io:fwrite("hello from leader:start 2\n"),
@@ -61,7 +65,7 @@ start() ->
 	io:fwrite("hello from leader:start 3\n"),
 	ok = basho_bench_measurement:run(),
 	io:fwrite("hello from leader:start 4\n"),
-	ok = mygenserv:launchWorkers().
+	ok = mygenserv:launchWorkers(SW, SD).
 
 %% ===================================================================
 %% Supervisor callbacks
@@ -69,9 +73,37 @@ start() ->
 
 init([]) ->
 	io:fwrite("hello from myleader:init\n"),
-	
-  
-    {A1, A2, A3} =
+
+   {ok,                   % ok, supervisor here's what we want you to do
+  {                       
+    {                     % Global supervisor options
+      one_for_one,        % - use the one-for-one restart strategy
+      1000,               % - and allow a maximum of 1000 restarts
+      3600                % - per hour for each child process
+    },                     
+    [                     % The list of child processes you should supervise
+      {                   % We only have one
+        mygenserv,     	  % - Register it under the name mygenserv
+        {                 % - Here's how to find and start this child's code 
+          mygenserv,   	  %   * the module is called mygenserv
+          start_link,     %   * the function to invoke is called start_link
+          []              %   * and here's the list of default parameters to use
+        },                
+        permanent,        % - child should run permantenly, restart on crash 
+        2000,             % - give child 2 sec to clean up on system stop, then kill 
+        worker,           % - FYI, this child is a worker, not a supervisor
+        [mygenserv]    	  % - these are the modules the process uses  
+      } 
+    ]                     
+  }                        
+}. 
+
+
+
+
+recup() ->
+io:format("Hello From recup debut \n"),
+  {A1, A2, A3} =
         case basho_bench_config:get(rng_seed, {42, 23, 12}) of
             {Aa, Ab, Ac} -> {Aa, Ab, Ac};
             now -> now()
@@ -111,39 +143,13 @@ init([]) ->
                       num_reads=NumReads, 
                       num_updates=NumUpdates,
                       measure_staleness=MeasureStaleness},
-
-
-   {ok,                   % ok, supervisor here's what we want you to do
-  {                       
-    {                     % Global supervisor options
-      one_for_one,        % - use the one-for-one restart strategy
-      1000,               % - and allow a maximum of 1000 restarts
-      3600                % - per hour for each child process
-    },                     
-    [                     % The list of child processes you should supervise
-      {                   % We only have one
-        mygenserv,     	  % - Register it under the name mygenserv
-        {                 % - Here's how to find and start this child's code 
-          mygenserv,   	  %   * the module is called mygenserv
-          start_link,     %   * the function to invoke is called start_link
-          [StateW, StateD]              %   * and here's the list of default parameters to use
-        },                
-        permanent,        % - child should run permantenly, restart on crash 
-        2000,             % - give child 2 sec to clean up on system stop, then kill 
-        worker,           % - FYI, this child is a worker, not a supervisor
-        [mygenserv]    	  % - these are the modules the process uses  
-      } 
-    ]                     
-  }                        
-}. 
-
-
-
+{StateW, StateD}.
 
 %%
 %% Expand operations list into tuple suitable for weighted, random draw
 %%
 ops_tuple() ->
+  io:format("Hello From ops_tuple \n"),
     F =
         fun({OpTag, Count}) ->
                 lists:duplicate(Count, {OpTag, OpTag});

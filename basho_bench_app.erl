@@ -32,7 +32,6 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
-
 %% ===================================================================
 %% API
 %%===================================================================
@@ -95,7 +94,7 @@ halt_or_kill() ->
 %    	io:fwrite("hello from app:start 6\n"),
 %    {ok, Pid}.
      
-start(_StartType, _StartArgs) ->      
+start(_StartType, _StartArgs) ->  
 	{ok, Pid} = myleader:start_link(),
 	io:fwrite("hello from app:start 1\n"),
 	ok = myleader:start(),

@@ -23,8 +23,8 @@
   stop/0,                      % - stops it
   say_hello/0,                 % - prints "Hello" to stdout
   get_count/0,	               % - returns the count state
-  launchWorkersSup/0,
-  launchWorkers/0]).
+  launchWorkersSup/2,
+  launchWorkers/2]).
   
 %% ---------------------------------------------------------------------------
 %% gen_server Function Exports
@@ -46,7 +46,7 @@ start_link() ->                % start_link spawns and links to a new
     gen_server:start_link(     %  process in one atomic step. The parameters:
       {local, ?SERVER},        %  - name to register the process under locally
       ?MODULE,                 %  - the module to find the init/1 callback in 
-      [StateW, StateD],                      %  - what parameters to pass to init/1
+      [],                      %  - what parameters to pass to init/1
       []).                     %  - additional options to start_link
 
 stop() ->                      % Note that we do not use ! anymore. Instead
@@ -66,12 +66,12 @@ get_count() ->                 % Here, on the other hand, we do expect a
                                %  gen_server:call/2 hides the send/receive
                                %  logic from us. Nice.
                                
-launchWorkersSup() ->
+launchWorkersSup(StateW, StateD) ->
 	io:fwrite("hello from mygenserv:launchWorkersSup before\n"),
 	gen_server:call(?SERVER, launchWorkersSup),
 	io:fwrite("hello from mygenserv:launchWorkersSup after\n").
 	
-launchWorkers() ->
+launchWorkers(StateW, StateD) ->
 	io:fwrite("hello from mygenserv:launchWorkers before\n"),
 	gen_server:call(?SERVER, launchWorkers),
 	io:fwrite("hello from mygenserv:launchWorkers after\n").                      
